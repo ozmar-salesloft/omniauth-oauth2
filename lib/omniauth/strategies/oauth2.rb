@@ -63,7 +63,12 @@ module OmniAuth
         options.token_params.merge(options_for("token"))
       end
 
-      def callback_phase # rubocop:disable AbcSize, CyclomaticComplexity, MethodLength, PerceivedComplexity
+      def callback_phase # rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/MethodLength, Metrics/PerceivedComplexity
+        Rails.logger.warn("calback_phase!!!!!!!!!!!!!!!!!!!!!")
+        Rails.logger.warn("request.params!!!!!!!!!!!!!!!!!!!!! #{request.params}")
+        Rails.logger.warn("access_token2!!!!!!!!!!!!!!!!!!!!! #{build_access_token}")
+        Rails.logger.warn("options.auth_token_params!!!!!!!!!!!!!!!!!!!!! #{options.auth_token_params}")
+        Rails.logger.warn("options!!!!!!!!!!!!!!!!!!!!! #{options}")
         error = request.params["error_reason"] || request.params["error"]
         if error
           fail!(error, CallbackError.new(request.params["error"], request.params["error_description"] || request.params["error_reason"], request.params["error_uri"]))
@@ -80,12 +85,20 @@ module OmniAuth
         fail!(:timeout, e)
       rescue ::SocketError => e
         fail!(:failed_to_connect, e)
+      rescue NoMethodError => e
+        Rails.logger.warn("rescue NoMethodError!!!!!!!!!!!!!!!!!!!!!")
+        Rails.logger.warn("access_token!!!!!!!!!!!!!!!!!!!!! #{build_access_token}")
+        Rails.logger.error(e)
+        Rails.logger.error(e.backtrace)
+        fail!(:failed_to_connect, e)
       end
 
     protected
 
       def build_access_token
         verifier = request.params["code"]
+        Rails.logger.warn("redirect_uri!!!!!!!!!!!!!!!!!!!!! #{{:redirect_uri => callback_url}.merge(token_params.to_hash(:symbolize_keys => true))}")
+        Rails.logger.warn("deep_symbolize!!!!!!!!!!!!!!!!!!!!! #{deep_symbolize(options.auth_token_params)}")
         client.auth_code.get_token(verifier, {:redirect_uri => callback_url}.merge(token_params.to_hash(:symbolize_keys => true)), deep_symbolize(options.auth_token_params))
       end
 
